@@ -2,6 +2,10 @@ package com.cers.bulletinBoard.controller;
 
 import com.cers.bulletinBoard.model.Notice;
 import com.cers.bulletinBoard.repository.NoticeRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,14 +24,21 @@ public class NoticeController {
     }
 
     @GetMapping
-    public List<Notice> findAll(){
-        return this.repository.findAll();
+    public Page<Notice> findAll(@RequestParam("page") int pageNumber){
+        Pageable pagination = PageRequest.of(pageNumber, 5, Sort.by("visualizationDate"));
+        return this.repository.findAll(pagination);
     }
 
-//    TODO: ajeitar aqui depois.
     @GetMapping(path="/{id}")
     public ResponseEntity read(@PathVariable long id){
-        return this.repository.findById(id).map(record -> ResponseEntity.ok().body(record)).orElse(ResponseEntity.notFound().build());
+        return this.repository.findById(id)
+                .map(record -> {
+                    if (record.getVisualizationDate() == null) {
+                        record.setVisualizationDate(new Date());
+                        record = this.repository.save(record);
+                    }
+                    return ResponseEntity.ok().body(record);
+                }).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -42,6 +53,7 @@ public class NoticeController {
                 .map(record -> {
                     record.setTitle(model.getTitle());
                     record.setDescription(model.getDescription());
+                    record.setVisualizationDate(null);
                     Notice modelUpdated = this.repository.save(record);
                     return ResponseEntity.ok().body(modelUpdated);
                 }).orElse(ResponseEntity.notFound().build());
