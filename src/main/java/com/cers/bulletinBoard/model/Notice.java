@@ -29,6 +29,8 @@ public class Notice {
     private Date publicationDate;
 
     @Column(name = "visualization_date")
-    private LocalDate visualizationDate;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date visualizationDate;
 
 }
